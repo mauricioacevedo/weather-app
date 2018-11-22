@@ -1,4 +1,5 @@
-const axios = require('axios');
+const logic = require('./logic/logic');
+const weather = require('./weather/weather');
 
 const argv = require('yargs').options({
     address: {
@@ -8,20 +9,24 @@ const argv = require('yargs').options({
     }
 }).argv;
 
-console.log(argv.address);
 
-let encodedUrl = encodeURI(argv.address);
 
-axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodedUrl}&key=AIzaSyB3flmbINSf__9SaiyMMASQOzdvYh1fOKc`)
-    .then(resp => {
-        let results = resp.data.results[0];
-        let formatted_address = results.formatted_address;
-        results = resp.data.results[0].geometry;
-        let lat = results.location.lat;
-        let lng = results.location.lng;
+let getInfo = async(address) => {
 
-        console.log('Formatted address: '+JSON.stringify(formatted_address,undefined,2));
-        console.log('Latitude: '+JSON.stringify(lat,undefined,2));
-        console.log('Longitude: '+JSON.stringify(lng,undefined,2));
-    })
-    .catch( e => console.log('ERROR!!!! ', e))
+    try {
+        let coords = await logic.getLocationLatLng(address);
+        let temp = await weather.getWeather(coords.lat,coords.lng);
+
+        return `The temperature in ${address} is ${temp} C° `;
+        
+    } catch (error) {
+        return `Unable to find weather on ${address} `;
+    }
+
+    
+}
+
+
+getInfo(argv.address)
+    .then( msg => console.log(msg))
+    .catch( err => console.log(e));
